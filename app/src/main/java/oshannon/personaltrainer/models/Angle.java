@@ -2,7 +2,7 @@ package oshannon.personaltrainer.models;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
-import oshannon.personaltrainer.Utils.ImageUtils;
+import oshannon.personaltrainer.Utils.MediaUtils;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -19,19 +19,23 @@ public class Angle {
     private String filename;
     private String notes;
     private Bitmap thumbnail;
+    private String thumbnailPath;
+    private String videoPath;
 
     /**
      * Constructor when creating a new Angle and we don't have the ID (Db creates this)
      */
     public Angle(Uri uri){
-        String fullPath = uri.getPath();
+        String path = uri.getPath();
 
         // In order to get the filename we have to strip off the path and the .mp4 from the end
-        filename = fullPath.substring(fullPath.lastIndexOf(File.separator) + 1, fullPath.length() - 4);
+        filename = path.substring(path.lastIndexOf(File.separator) + 1, path.length() - 4);
+
+        createURIs();
 
         // Create a thumbnail using the video
-        thumbnail = ImageUtils.createImageThumbnailFromVideo(fullPath);
-        ImageUtils.saveImageToInternalStorage(thumbnail, filename);
+        thumbnail = MediaUtils.createImageThumbnailFromVideo(getVideoPath());
+        MediaUtils.saveImage(thumbnail, thumbnailPath);
     }
 
     /**
@@ -42,6 +46,12 @@ public class Angle {
         this.sessionId = sessionId;
         this.notes = notes;
         this.filename = filename;
+        createURIs();
+    }
+
+    private void createURIs() {
+        videoPath = MediaUtils.getMediaFileName(filename, MediaUtils.MediaType.VIDEO);
+        thumbnailPath = MediaUtils.getMediaFileName(filename, MediaUtils.MediaType.THUMBNAIL);
     }
 
     public String getNotes() {
@@ -67,7 +77,7 @@ public class Angle {
     // TODO: use callback to lazy load
     public Bitmap getThumbnail() {
         if (thumbnail == null) {
-            thumbnail = ImageUtils.loadImageFromInternalStorage(getThumbnailPath());
+            thumbnail = MediaUtils.loadImage(thumbnailPath, true);
         }
         return thumbnail;
     }
@@ -79,34 +89,17 @@ public class Angle {
     public static File getNewVideoFile(){
         // Create a media file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        File mediaFile = new File(getMediaFilePath(timeStamp, MediaType.VIDEO));
+        File mediaFile = new File(MediaUtils.getMediaFileName(timeStamp, MediaUtils.MediaType.VIDEO));
 
         return mediaFile;
     };
 
-    private enum MediaType {
-        VIDEO, THUMBNAIL;
-    }
-
-    private static String getMediaFilePath(String filename, MediaType type) {
-        String dir = null;
-        String typeInPath = null;
-        if (type == MediaType.VIDEO) {
-            dir = ImageUtils.getExternalMediaDir().toString();
-            typeInPath = ".mp4";
-        } else {
-            dir = ImageUtils.getInternalMediaDir().toString();
-            typeInPath = ".png";
-        }
-        return dir + File.separator + filename + ".mp4";
+    public String getThumbnailPath() {
+        return thumbnailPath;
     }
 
     public String getVideoPath() {
-        return getMediaFilePath(filename, MediaType.VIDEO);
-    }
-
-    public String getThumbnailPath() {
-        return getMediaFilePath(filename, MediaType.THUMBNAIL);
+        return videoPath;
     }
 
     public String getFilename() {

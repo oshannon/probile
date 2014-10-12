@@ -71,16 +71,17 @@ public class SessionDbHelper {
                 String notes = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_NOTES));
                 int status = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_STATUS));
                 sessions.add(new Session(id, date, notes, SessionManager.SessionStatus.fromVal(status)));
+                cursor.moveToNext();
             }
         }
         cursor.close();
         return sessions;
     }
 
-    private void deleteSession(long id) {
+    public int deleteSession(long id) {
         String selection = COLUMN_NAME_ID + " LIKE ?";
         String[] selectionArgs = { String.valueOf(id) };
-        dbHelper.getWritableDatabase().delete(TABLE_NAME, selection, selectionArgs);
+        return dbHelper.getWritableDatabase().delete(TABLE_NAME, selection, selectionArgs);
     }
 
     /**
@@ -90,7 +91,7 @@ public class SessionDbHelper {
      *               ContentValues values = new ContentValues();
      *               values.put(COLUMN_NAME_NOTES, "New note");
      */
-    private void updateSession(Session session, ContentValues values) {
+    public void updateSession(Session session, ContentValues values) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         String selection = COLUMN_NAME_ID + " LIKE ?";
         String[] selectionArgs = { String.valueOf(session.getId()) };

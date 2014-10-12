@@ -63,15 +63,16 @@ public class AngleDbHelper {
                 String notes = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_NOTES));
                 String filename = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_FILENAME));
                 angles.add(new Angle(id, sessionId, filename, notes));
+                cursor.moveToNext();
             }
         }
         cursor.close();
         return angles;
     }
 
-    private void deleteAngle(String id) {
+    public void deleteAngle(long id) {
         String selection = COLUMN_NAME_ID + " LIKE ?";
-        String[] selectionArgs = { id };
+        String[] selectionArgs = {String.valueOf(id)};
         dbHelper.getWritableDatabase().delete(TABLE_NAME, selection, selectionArgs);
     }
 
@@ -82,7 +83,7 @@ public class AngleDbHelper {
      *               ContentValues values = new ContentValues();
      *               values.put(COLUMN_NAME_NOTES, "New note");
      */
-    private void updateAngle(Angle angle, ContentValues values) {
+    public void updateAngle(Angle angle, ContentValues values) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         String selection = COLUMN_NAME_ID + " LIKE ?";
         String[] selectionArgs = { String.valueOf(angle.getId()) };

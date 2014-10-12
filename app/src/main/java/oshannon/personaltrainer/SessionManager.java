@@ -1,7 +1,8 @@
 package oshannon.personaltrainer;
 
-import android.view.inputmethod.InputMethod;
+import oshannon.personaltrainer.Utils.MediaUtils;
 import oshannon.personaltrainer.db.AngleDbHelper;
+import oshannon.personaltrainer.db.DbHelper;
 import oshannon.personaltrainer.db.SessionDbHelper;
 import oshannon.personaltrainer.models.Angle;
 import oshannon.personaltrainer.models.Session;
@@ -15,7 +16,7 @@ import java.util.Date;
  */
 public class SessionManager {
 
-    ArrayList<SessionsCallback> callbacks;
+    ArrayList<SessionsListener> listeners;
 
     public enum SessionStatus{
         UNSENT(1), INREVIEW(2), REVIEWED(3);
@@ -44,11 +45,11 @@ public class SessionManager {
     private static SessionManager instance;
 
     private SessionManager() {
-        callbacks = new ArrayList<SessionsCallback>();
+        listeners = new ArrayList<SessionsListener>();
     }
 
-    public void addSessionsCallback(SessionsCallback callback) {
-        this.callbacks.add(callback);
+    public void addSessionsListener(SessionsListener listener) {
+        this.listeners.add(listener);
     }
 
     public static SessionManager getInstance() {
@@ -64,12 +65,13 @@ public class SessionManager {
         angles.add(angle);
         Session session = new Session(date, null, SessionStatus.UNSENT, angles);
         long sessionId = SessionDbHelper.getInstance().addSession(session);
+        session.setId(sessionId);
         angle.setSessionId(sessionId);
         AngleDbHelper.getInstance().addAngle(angle);
         session.addAngle(angle);
 
-        for(SessionsCallback callback : callbacks) {
-            callback.sessionAdded(session);
+        for(SessionsListener listener : listeners) {
+            listener.sessionAdded(session);
         }
     }
 
@@ -95,9 +97,24 @@ public class SessionManager {
         return session;
     }
 
-    public interface SessionsCallback {
+    public interface SessionsListener {
         public void sessionAdded(Session session);
-        public void sessionDeleted();
-        public void sessionUpdated();
+        public void sessionDeleted(Session session);
+        public void sessionUpdated(Session session);
+    }
+
+    public void deleteSession(Session session) {
+        ArrayList<Angle> angles = session.getAngles();
+        for (Angle angle : angles) {
+            MediaUtils.deleteMedia(angle.getThumbnailPath());
+            MediaUtils.deleteMedia(angle.getVideoPath());
+            AngleDbHelper.getInstance().deleteAngle(angle.getId());
+        }
+        int deleted = SessionDbHelper.getInstance().deleteSession(session.getId());
+        for (SessionsListener listener : listeners) {
+            listener.sessionDeleted(session);
+        }
+        DbHelper.getInstance().printContents(SessionDbHelper.TABLE_NAME);
+        DbHelper.getInstance().printContents(AngleDbHelper.TABLE_NAME);
     }
 }

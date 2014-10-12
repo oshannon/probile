@@ -9,39 +9,46 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import oshannon.personaltrainer.AppState;
-import oshannon.personaltrainer.R;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.IOException;
 
 /**
  * Created by orrieshannon on 2014-09-28.
  */
-public class ImageUtils {
+public class MediaUtils {
 
-    private static final String LOG_TAG = ImageUtils.class.getSimpleName();
+    private static final String LOG_TAG = MediaUtils.class.getSimpleName();
+
+    public enum MediaType {
+        VIDEO, THUMBNAIL;
+    }
 
     public static Bitmap createImageThumbnailFromVideo(String path) {
-        Bitmap thumb = ThumbnailUtils.createVideoThumbnail(path,
-                MediaStore.Images.Thumbnails.MINI_KIND);
-
+        Bitmap thumb = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Images.Thumbnails.MINI_KIND);
         return thumb;
     }
 
-    public static String saveImageToInternalStorage(Bitmap bitmapImage, String path){
-        File directory = getInternalMediaDir();
+    /**
+     * Saves an image to the internal directory
+     * @param bitmapImage Image to save
+     * @return
+     */
+    public static boolean saveImage(Bitmap bitmapImage, String path){
         // Create imageDir
-        File file = new File(directory, path);
+        File file = new File(path);
+
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         FileOutputStream fos = null;
         try {
-
             fos = new FileOutputStream(file);
 
             // Use the compress method on the BitMap object to write image to the OutputStream
@@ -49,21 +56,46 @@ public class ImageUtils {
             fos.close();
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-        return directory.getAbsolutePath();
+        return true;
     }
 
-    public static Bitmap loadImageFromInternalStorage(String filename)
+    /**
+     * Loads an image from either internal or external directory
+     * @return
+     */
+    public static Bitmap loadImage(String path, boolean internal)
     {
         Bitmap bmp = null;
+
+
         try {
-            File f = new File(getInternalMediaDir(), filename);
+            File f = new File(path);
             bmp = BitmapFactory.decodeStream(new FileInputStream(f));
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         return bmp;
+    }
+
+    public static boolean deleteMedia(String filename) {
+        File f = new File(filename);
+        return f.delete();
+    }
+
+    public static String getMediaFileName(String filename, MediaType type) {
+        String dir = null;
+        String typeInPath = null;
+        if (type == MediaType.VIDEO) {
+            dir = MediaUtils.getExternalMediaDir().toString();
+            typeInPath = ".mp4";
+        } else {
+            dir = MediaUtils.getInternalMediaDir().toString();
+            typeInPath = ".png";
+        }
+        return dir + File.separator + filename + typeInPath;
     }
 
     public static File getExternalMediaDir() {

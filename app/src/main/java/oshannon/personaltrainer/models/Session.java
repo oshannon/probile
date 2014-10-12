@@ -63,6 +63,10 @@ public class Session {
         return id;
     }
 
+    public void setId(long id) {
+        this.id = id;
+    }
+
     public ArrayList<Angle> getAngles() {
         return angles;
     }

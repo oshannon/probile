@@ -40,6 +40,17 @@ public class SessionAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    public void removeSession(Session sessionToRemove) {
+        synchronized (sessions) {
+            for (Session session : sessions) {
+                if (sessionToRemove.getId() == session.getId()) {
+                    sessions.remove(session);
+                    notifyDataSetChanged();
+                }
+            }
+        }
+    }
+
     @Override
     public int getCount() {
         return sessions.size();

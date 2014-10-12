@@ -5,4 +5,8 @@
     <string name="action_settings">Settings</string>
     <string name="action_capture_video">Caputre Video</string>
 
+    <array name="session_menu">
+        <item name="delete">Delete</item>
+    </array>
+
 </resources>
